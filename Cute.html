@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine's Surprise</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #FFDEE9;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            flex-direction: column;
+        }
+        .intro, .question-container, .response-screen {
+            display: none;
+        }
+        .visible {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .cat {
+            width: 250px;
+            height: 250px;
+            background-size: cover;
+            animation: bounce 1s infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+        .message, .question-text, .response-message {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .options button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #FFD1DC;
+            border: none;
+            border-radius: 10px;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .options button:hover {
+            background-color: #FFB6C1;
+            transform: scale(1.1);
+        }
+        .next-message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Music -->
+    <audio id="bg-music" loop>
+        <source src="song.mp3" type="audio/mp3">
+        <source src="music.ogg" type="audio/ogg">
+    </audio>
+
+    <!-- Welcome Screen -->
+    <div class="intro visible">
+        <div class="cat" style="background-image: url('cat.png');"></div>
+        <div class="message" id="start-message">Hi there! Press Enter or Tap to continue! 🫶</div>
+    </div>
+
+    <!-- Question Container -->
+    <div class="question-container">
+        <div class="question-text" id="question"></div>
+        <div class="options">
+            <button onclick="handleResponse('yes')">Yes</button>
+            <button onclick="handleResponse('no')">No</button>
+        </div>
+    </div>
+
+    <!-- Response Screen (After Clicking Yes or No) -->
+    <div class="response-screen">
+        <div class="cat" id="response-cat"></div>
+        <div class="response-message" id="response-message"></div>
+        <div class="next-message">Press Enter or Tap to continue...</div>
+    </div>
+
+    <script>
+        const questions = [
+            { question: "Do you enjoy the night in Ligao?", 
+              positive: { message: "...🥰", image: "cat1.gif" }, 
+              negative: { message: "Oh no! I'll make it better next time! 😿", image: "cat2.gif" } 
+            },
+            { question: "Do you think I'm a good friend?", 
+              positive: { message: "Aww! You're the best too! ❤️", image: "cat1.gif" }, 
+              negative: { message: "Ouch! That hurt... but I still like you. 😿", image: "cat2.gif" } 
+            },
+            { question: "Do you like surprises?", 
+              positive: { message: "Yay! I hope this one makes you smile! 🎁", image: "cat1.gif" }, 
+              negative: { message: "Oh no! I promise this is a good one! 🥺", image: "cat2.gif" } 
+            }
+        ];
+    
+        let currentQuestionIndex = 0;
+        let inResponseScreen = false;
+        let musicStarted = false;
+    
+        function startGame() {
+            document.querySelector(".intro").classList.remove("visible");
+            document.querySelector(".question-container").classList.add("visible");
+            loadQuestion();
+        }
+    
+        function loadQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                let q = questions[currentQuestionIndex];
+                document.getElementById("question").innerText = q.question;
+    
+                document.querySelector(".question-container").classList.add("visible");
+                document.querySelector(".response-screen").classList.remove("visible");
+    
+                inResponseScreen = false;
+            } else {
+                document.body.innerHTML = "<h2>Happy Valentine's! 🎉💕</h2>";
+            }
+        }
+    
+        function handleResponse(choice) {
+            let q = questions[currentQuestionIndex];
+            let responseData = choice === "yes" ? q.positive : q.negative;
+    
+            document.getElementById("response-message").innerText = responseData.message;
+            document.getElementById("response-cat").style.backgroundImage = `url('${responseData.image}')`;
+    
+            document.querySelector(".question-container").classList.remove("visible");
+            document.querySelector(".response-screen").classList.add("visible");
+    
+            inResponseScreen = true;
+        }
+    
+        // Function to start music after user interaction
+        function startMusic() {
+            let music = document.getElementById("bg-music");
+            if (!musicStarted) {
+                music.muted = false; // Unmute the audio
+                music.play().catch(() => console.log("User interaction required."));
+                musicStarted = true;
+            }
+        }
+    
+        // Detect if the user is on mobile
+        function isMobile() {
+            return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        }
+    
+        // Function to handle tap or keypress to start
+        function handleStartEvent() {
+            startMusic(); // Ensures music starts
+    
+            if (document.querySelector(".intro").classList.contains("visible")) {
+                startGame();
+            } else if (inResponseScreen) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+    
+        // If mobile, change message and allow tap
+        if (isMobile()) {
+            document.getElementById("start-message").innerText = "Tap to start! 🫶";
+            document.addEventListener("touchstart", handleStartEvent, { once: true });
+        } else {
+            // Desktop: Enter key
+            document.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    handleStartEvent();
+                }
+            });
+        }
+    
+        // Click anywhere to start (only once)
+        document.addEventListener("click", handleStartEvent, { once: true });
+    
+        // ✅ FIX: Tap works on the feedback screen
+        document.querySelector(".response-screen").addEventListener("click", () => {
+            if (inResponseScreen) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        });
+    
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && inResponseScreen) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        });
+    </script>
+    
+</body>
+</html>
